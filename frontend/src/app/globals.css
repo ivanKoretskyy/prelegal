@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+:root {
+  --color-desk: #12151c;
+  --color-desk-raised: #1a1e27;
+  --color-pad: #f5efd6;
+  --color-pad-line: #cabf98;
+  --color-paper: #fffefb;
+  --color-paper-edge: #e4ddc9;
+  --color-ink: #201c16;
+  --color-ink-soft: #52493a;
+  --color-stamp: #a8351f;
+  --color-stamp-soft: #c96a4d;
+  --color-parchment-text: #2b2618;
+
+  /* Pre-mixed solid colors (not color/opacity utilities): html2canvas, used
+     for PDF export, can't parse the oklab color-mix() Tailwind v4 emits for
+     opacity modifiers. */
+  --color-ink-faint: #b4ad98;
+  --color-ink-muted-1: #867f74;
+  --color-ink-muted-2: #756d61;
+  --color-pad-muted-1: #9a988c;
+  --color-pad-muted-2: #848279;
+  --color-desk-border: #2a2c33;
+  --color-blank-border: #c27161;
+  --color-blank-text: #b14935;
+}
+
+@theme inline {
+  --color-desk: var(--color-desk);
+  --color-desk-raised: var(--color-desk-raised);
+  --color-pad: var(--color-pad);
+  --color-pad-line: var(--color-pad-line);
+  --color-paper: var(--color-paper);
+  --color-paper-edge: var(--color-paper-edge);
+  --color-ink: var(--color-ink);
+  --color-ink-soft: var(--color-ink-soft);
+  --color-stamp: var(--color-stamp);
+  --color-stamp-soft: var(--color-stamp-soft);
+  --color-parchment-text: var(--color-parchment-text);
+  --color-ink-faint: var(--color-ink-faint);
+  --color-ink-muted-1: var(--color-ink-muted-1);
+  --color-ink-muted-2: var(--color-ink-muted-2);
+  --color-pad-muted-1: var(--color-pad-muted-1);
+  --color-pad-muted-2: var(--color-pad-muted-2);
+  --color-desk-border: var(--color-desk-border);
+  --color-blank-border: var(--color-blank-border);
+  --color-blank-text: var(--color-blank-text);
+  --font-serif: var(--font-serif);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
+body {
+  background: var(--color-desk);
+  color: var(--color-pad);
+  font-family: var(--font-sans);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+.blank-stamp {
+  transition: background-color 0.5s ease-out, color 0.15s ease-out;
+}
+
+.blank-stamp[data-filled="true"] {
+  animation: stamp-in 0.4s ease-out;
+}
+
+@keyframes stamp-in {
+  0% {
+    background-color: rgba(168, 53, 31, 0.28);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
