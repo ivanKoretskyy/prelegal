@@ -1,3 +1,7 @@
+# ---- Backend ----
+backend/*.db
+backend/src/backend/static/
+
 # ---- Python ----
 __pycache__/
 *.py[cod]

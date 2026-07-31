@@ -1,0 +1,16 @@
+.git
+.claude
+.env
+.envexample
+
+frontend/node_modules
+frontend/.next
+frontend/out
+
+backend/.venv
+backend/*.db
+backend/src/backend/static
+backend/.pytest_cache
+backend/**/__pycache__
+
+**/*.pyc
