@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { ChatPanel } from "./ChatPanel";
 import { DocumentPreview } from "./DocumentPreview";
 import { IntakeForm } from "./IntakeForm";
 import { formatDisplayDate } from "@/lib/format";
@@ -88,8 +89,17 @@ export function NdaWorkspace() {
       </header>
 
       <main className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-6 py-10 sm:px-10 lg:grid-cols-[minmax(0,22rem)_1fr] lg:items-start">
-        <div className="bg-pad px-6 py-8 sm:px-8">
-          <IntakeForm data={formData} onChange={handleChange} />
+        <div className="space-y-8 bg-pad px-6 py-8 sm:px-8">
+          <ChatPanel fields={formData} onFieldsChange={setFormData} />
+
+          <details className="group border-t border-pad-line pt-6">
+            <summary className="cursor-pointer font-mono text-xs uppercase tracking-[0.16em] text-stamp">
+              Edit fields manually
+            </summary>
+            <div className="mt-6">
+              <IntakeForm data={formData} onChange={handleChange} />
+            </div>
+          </details>
         </div>
 
         <div className="overflow-x-auto pb-10">
