@@ -8,7 +8,7 @@ The available documents are covered in the catalog.json file in the project root
 
 @catalog.json
 
-The current implementation supports the Mutual NDA document type only, via a form-based UI (not yet AI chat), running on the Dockerized FastAPI + SQLite foundation with basic (non-JWT) user authentication. See Implementation Status below for what's built vs. planned.
+The current implementation supports the Mutual NDA document type only. Users fill it in via a freeform AI chat (with the original manual form kept as a fallback for direct edits), running on the Dockerized FastAPI + SQLite foundation with basic (non-JWT) user authentication. See Implementation Status below for what's built vs. planned.
 
 ## Development process
 
@@ -67,12 +67,12 @@ Backend available at http://localhost:8000
 - Mutual NDA form with live preview and PDF download — unchanged from the original prototype, just now served through the new foundation
 - Backend test suite (pytest) covering signup/duplicate signup/signin/wrong password/me/signout
 
-### Planned, not yet implemented (PL-5)
-- AI chat interface to replace the manual form for NDA creation
-- LiteLLM via OpenRouter with Cerebras inference (gpt-oss-120b model), per the Cerebras skill
-- Structured outputs for reliable field extraction from conversation
-- Live preview updates as AI extracts fields from chat
-- AI greets user, asks questions conversationally, and confirms when complete
+### Completed (PL-5) — issue #9
+- AI chat interface for NDA creation. The original manual form was kept as a fallback for direct edits rather than removed (a deliberate scope decision, not a gap) — it's tucked behind an "Edit fields manually" disclosure below the chat
+- `POST /api/chat/message` uses LiteLLM via OpenRouter with Cerebras inference (gpt-oss-120b model), per the Cerebras skill, with structured outputs (`response_format=ChatReply`) for reliable field extraction from conversation
+- The backend is stateless: the frontend sends the full message history plus the current field snapshot on every turn; the system prompt tracks known vs. missing fields and instructs the model to always return the full field snapshot
+- Live preview updates as the AI extracts fields from chat; `GET /api/chat/greeting` provides the opening message; the AI asks questions conversationally and confirms when the document is complete
+- Known limitation: a field can be corrected via chat but not cleared back to blank (the model has no way to signal "unset this") — clearing a field currently requires the manual form fallback
 
 ### Planned, not yet implemented (PL-6)
 - Support for the other 10 document types from catalog.json (only Mutual NDA exists today)
@@ -94,6 +94,8 @@ Backend available at http://localhost:8000
 - `POST /api/auth/signout` - Clear the session cookie
 - `GET /api/auth/me` - Get current user info
 - `GET /api/health` - Health check
+- `GET /api/chat/greeting` - Get AI greeting
+- `POST /api/chat/message` - Send chat message and get AI response (extracted fields + reply)
 
 ### Planned API Endpoints (not yet implemented)
 - `GET /api/documents` - List user's saved documents (auth required)
@@ -101,5 +103,3 @@ Backend available at http://localhost:8000
 - `GET /api/documents/{id}` - Get specific document (auth required)
 - `PUT /api/documents/{id}` - Update document (auth required)
 - `DELETE /api/documents/{id}` - Delete document (auth required)
-- `GET /api/chat/greeting` - Get AI greeting
-- `POST /api/chat/message` - Send chat message and get AI response
