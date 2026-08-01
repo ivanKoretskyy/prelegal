@@ -20,9 +20,9 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Mutual NDA Generator",
+  title: "Prelegal",
   description:
-    "Fill in a short form and get a complete, downloadable Mutual Non-Disclosure Agreement.",
+    "Chat with an assistant to draft any of our supported legal agreements, then download a complete PDF.",
 };
 
 export default function RootLayout({

@@ -1,8 +1,35 @@
-import { ATTRIBUTION, STANDARD_TERMS_PARAGRAPHS } from "@/lib/standard-terms";
-import type { NdaFormData } from "@/lib/types";
+import { useMemo } from "react";
+import { parseTemplateBody, type InlineToken } from "@/lib/document-template";
+import type { DocumentFields, DocumentInfo } from "@/lib/types";
 import { Blank } from "./Blank";
 
-function CoverField({ label, value }: { label: string; value: string }) {
+const DEPTH_INDENT = ["", "ml-6", "ml-12", "ml-[4.5rem]"];
+
+function renderTokens(tokens: InlineToken[], data: DocumentFields, keyPrefix: string) {
+  return tokens.map((token, index) => {
+    const key = `${keyPrefix}-${index}`;
+    switch (token.type) {
+      case "text":
+        return <span key={key}>{token.value}</span>;
+      case "bold":
+        return (
+          <strong key={key} className="font-semibold">
+            {renderTokens(token.tokens, data, key)}
+          </strong>
+        );
+      case "blank":
+        return <Blank key={key} value={data[token.label] ?? ""} label={token.label} />;
+      case "link":
+        return (
+          <a key={key} href={token.url} className="underline" target="_blank" rel="noreferrer">
+            {token.text}
+          </a>
+        );
+    }
+  });
+}
+
+function KeyTermField({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <dt className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-muted-1">
@@ -15,36 +42,35 @@ function CoverField({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function DocumentPreview({ data }: { data: NdaFormData }) {
+export function DocumentPreview({
+  document,
+  data,
+}: {
+  document: DocumentInfo;
+  data: DocumentFields;
+}) {
+  const items = useMemo(() => parseTemplateBody(document.content), [document.content]);
+
   return (
     <div
-      id="nda-document"
+      id="document-preview"
       className="bg-paper text-ink font-serif shadow-[0_30px_60px_-20px_rgba(0,0,0,0.55)]"
     >
       <div className="mx-auto max-w-[46rem] px-8 py-12 sm:px-14 sm:py-16">
         <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-stamp">
-          Common Paper · Mutual NDA
+          Common Paper · {document.name}
         </p>
-        <h1 className="mt-3 text-3xl font-semibold leading-tight sm:text-4xl">
-          Mutual Non-Disclosure Agreement
-        </h1>
+        <h1 className="mt-3 text-3xl font-semibold leading-tight sm:text-4xl">{document.name}</h1>
 
         <section className="mt-10 border-t border-paper-edge pt-8">
           <h2 className="font-mono text-xs uppercase tracking-[0.16em] text-ink-soft">
-            Cover Page
+            Key Terms
           </h2>
 
           <dl className="mt-5 grid grid-cols-1 gap-x-8 gap-y-5 text-[15px] sm:grid-cols-2">
-            <CoverField label="Party A name" value={data.partyAName} />
-            <CoverField label="Party B name" value={data.partyBName} />
-            <CoverField label="Party A address" value={data.partyAAddress} />
-            <CoverField label="Party B address" value={data.partyBAddress} />
-            <CoverField label="Purpose" value={data.purpose} />
-            <CoverField label="Effective Date" value={data.effectiveDate} />
-            <CoverField label="MNDA Term" value={data.mndaTerm} />
-            <CoverField label="Term of Confidentiality" value={data.termOfConfidentiality} />
-            <CoverField label="Governing Law" value={data.governingLaw} />
-            <CoverField label="Jurisdiction" value={data.jurisdiction} />
+            {document.fields.map((label) => (
+              <KeyTermField key={label} label={label} value={data[label] ?? ""} />
+            ))}
           </dl>
         </section>
 
@@ -53,32 +79,18 @@ export function DocumentPreview({ data }: { data: NdaFormData }) {
             Standard Terms
           </h2>
 
-          <div className="mt-5 space-y-5 text-[15px] leading-relaxed">
-            {STANDARD_TERMS_PARAGRAPHS.map((paragraph) => (
-              <p key={paragraph.id}>
-                {paragraph.tokens.map((token, index) => {
-                  if (token.type === "text") {
-                    return <span key={index}>{token.value}</span>;
-                  }
-                  if (token.type === "bold") {
-                    return (
-                      <strong key={index} className="font-semibold">
-                        {token.value}
-                      </strong>
-                    );
-                  }
-                  return (
-                    <Blank key={index} value={data[token.field]} label={token.label} />
-                  );
-                })}
+          <div className="mt-5 space-y-4 text-[15px] leading-relaxed">
+            {items.map((item, index) => (
+              <p
+                key={index}
+                className={DEPTH_INDENT[Math.min(item.depth, DEPTH_INDENT.length - 1)]}
+              >
+                {item.marker && <span className="mr-1">{item.marker}</span>}
+                {renderTokens(item.tokens, data, `item-${index}`)}
               </p>
             ))}
           </div>
         </section>
-
-        <p className="mt-10 border-t border-paper-edge pt-6 font-mono text-[11px] leading-relaxed text-ink-muted-2">
-          {ATTRIBUTION}
-        </p>
       </div>
     </div>
   );

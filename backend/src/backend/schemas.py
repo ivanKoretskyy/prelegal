@@ -1,6 +1,6 @@
 from typing import Literal, Optional
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 
 class SignupRequest(BaseModel):
@@ -20,19 +20,6 @@ class UserOut(BaseModel):
     email: str
 
 
-class NdaFields(BaseModel):
-    partyAName: Optional[str] = None
-    partyAAddress: Optional[str] = None
-    partyBName: Optional[str] = None
-    partyBAddress: Optional[str] = None
-    purpose: Optional[str] = None
-    effectiveDate: Optional[str] = None
-    mndaTerm: Optional[str] = None
-    termOfConfidentiality: Optional[str] = None
-    governingLaw: Optional[str] = None
-    jurisdiction: Optional[str] = None
-
-
 class ChatMessage(BaseModel):
     role: Literal["user", "assistant"]
     content: str
@@ -40,9 +27,11 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     messages: list[ChatMessage]
-    fields: NdaFields
+    documentType: Optional[str] = None
+    fields: dict[str, Optional[str]] = Field(default_factory=dict)
 
 
 class ChatReply(BaseModel):
     reply: str
-    fields: NdaFields
+    documentType: Optional[str] = None
+    fields: dict[str, Optional[str]] = Field(default_factory=dict)
