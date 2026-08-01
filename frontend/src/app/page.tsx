@@ -1,11 +1,11 @@
 import { AuthBar } from "@/components/AuthBar";
-import { NdaWorkspace } from "@/components/NdaWorkspace";
+import { DocumentWorkspace } from "@/components/DocumentWorkspace";
 
 export default function Home() {
   return (
     <>
       <AuthBar />
-      <NdaWorkspace />
+      <DocumentWorkspace />
     </>
   );
 }

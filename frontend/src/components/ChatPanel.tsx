@@ -2,19 +2,24 @@
 
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { apiUrl } from "@/lib/api";
-import { EMPTY_FORM_DATA, type FieldKey, type NdaFormData } from "@/lib/types";
+import type { DocumentFields } from "@/lib/types";
 
 type ChatRole = "user" | "assistant";
 type ChatMessage = { role: ChatRole; content: string };
-type ChatFieldsResponse = Partial<Record<FieldKey, string | null>>;
-type ChatResponse = { reply: string; fields: ChatFieldsResponse };
+type ChatResponse = {
+  reply: string;
+  documentType: string | null;
+  fields: Record<string, string | null>;
+};
 
-function mergeFields(current: NdaFormData, incoming: ChatFieldsResponse): NdaFormData {
+function mergeFields(
+  current: DocumentFields,
+  incoming: Record<string, string | null | undefined>
+): DocumentFields {
   const next = { ...current };
-  for (const key of Object.keys(EMPTY_FORM_DATA) as FieldKey[]) {
-    const value = incoming[key];
+  for (const [label, value] of Object.entries(incoming)) {
     if (typeof value === "string" && value.trim().length > 0) {
-      next[key] = value;
+      next[label] = value;
     }
   }
   return next;
@@ -37,19 +42,28 @@ function MessageBlock({ message }: { message: ChatMessage }) {
 }
 
 export function ChatPanel({
+  documentType,
+  onDocumentTypeChange,
   fields,
   onFieldsChange,
 }: {
-  fields: NdaFormData;
-  onFieldsChange: (fields: NdaFormData) => void;
+  documentType: string | null;
+  onDocumentTypeChange: (documentType: string) => void;
+  fields: DocumentFields;
+  onFieldsChange: (fields: DocumentFields) => void;
 }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const documentTypeRef = useRef(documentType);
   const fieldsRef = useRef(fields);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    documentTypeRef.current = documentType;
+  }, [documentType]);
 
   useEffect(() => {
     fieldsRef.current = fields;
@@ -100,11 +114,18 @@ export function ChatPanel({
       const response = await fetch(apiUrl("/api/chat/message"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: nextMessages, fields: fieldsRef.current }),
+        body: JSON.stringify({
+          messages: nextMessages,
+          documentType: documentTypeRef.current,
+          fields: fieldsRef.current,
+        }),
       });
       if (!response.ok) throw new Error("Chat request failed");
       const data: ChatResponse = await response.json();
       setMessages((current) => [...current, { role: "assistant", content: data.reply }]);
+      if (data.documentType && data.documentType !== documentTypeRef.current) {
+        onDocumentTypeChange(data.documentType);
+      }
       onFieldsChange(mergeFields(fieldsRef.current, data.fields));
     } catch {
       setError("Something went wrong reaching the assistant. Please try again.");

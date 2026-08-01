@@ -26,5 +26,11 @@ RUN uv sync --frozen --no-dev
 # Static frontend export, served by FastAPI at "/".
 COPY --from=frontend-build /app/frontend/out ./src/backend/static
 
+# Document templates + catalog, read by the backend at runtime.
+COPY templates/ ./templates
+COPY catalog.json ./catalog.json
+ENV TEMPLATES_DIR=/app/templates \
+    CATALOG_PATH=/app/catalog.json
+
 EXPOSE 8000
 CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
