@@ -30,7 +30,13 @@ COPY --from=frontend-build /app/frontend/out ./src/backend/static
 COPY templates/ ./templates
 COPY catalog.json ./catalog.json
 ENV TEMPLATES_DIR=/app/templates \
-    CATALOG_PATH=/app/catalog.json
+    CATALOG_PATH=/app/catalog.json \
+    BACKEND_DB_PATH=/app/data/backend.db
+
+# SQLite file lives here so it survives restarts when this is mounted on a
+# volume (see scripts/start-*). Falls back to an anonymous volume if run
+# without -v, so data isn't lost to the writable container layer either way.
+VOLUME ["/app/data"]
 
 EXPOSE 8000
 CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
