@@ -7,15 +7,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from .database import init_fresh_db
-from .routers import auth, chat, documents, health
+from .database import init_db
+from .routers import auth, chat, documents, health, templates
 
 STATIC_DIR = Path(os.environ.get("BACKEND_STATIC_DIR", Path(__file__).resolve().parent / "static"))
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    init_fresh_db()
+    init_db()
     yield
 
 
@@ -32,6 +32,7 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(chat.router)
+app.include_router(templates.router)
 app.include_router(documents.router)
 
 if STATIC_DIR.is_dir():

@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlmodel import Session, select
 
 from ..database import get_session
+from ..deps import get_current_user
 from ..models import User
 from ..schemas import SigninRequest, SignupRequest, UserOut
 from ..security import (
@@ -9,7 +10,6 @@ from ..security import (
     SESSION_MAX_AGE_SECONDS,
     create_session_token,
     hash_password,
-    read_session_token,
     verify_password,
 )
 
@@ -24,15 +24,6 @@ def _set_session_cookie(response: Response, user_id: int) -> None:
         samesite="lax",
         max_age=SESSION_MAX_AGE_SECONDS,
     )
-
-
-def get_current_user(request: Request, session: Session = Depends(get_session)) -> User:
-    token = request.cookies.get(SESSION_COOKIE_NAME)
-    user_id = read_session_token(token) if token else None
-    user = session.get(User, user_id) if user_id is not None else None
-    if user is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Not signed in")
-    return user
 
 
 @router.post("/signup", response_model=UserOut, status_code=status.HTTP_201_CREATED)

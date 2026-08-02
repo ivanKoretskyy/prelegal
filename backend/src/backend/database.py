@@ -8,10 +8,10 @@ DB_PATH = Path(os.environ.get("BACKEND_DB_PATH", "backend.db"))
 engine = create_engine(f"sqlite:///{DB_PATH}", connect_args={"check_same_thread": False})
 
 
-def init_fresh_db() -> None:
-    """Recreate the SQLite file from scratch so every container start begins empty."""
-    if DB_PATH.exists():
-        DB_PATH.unlink()
+def init_db() -> None:
+    """Create any missing tables. The SQLite file itself persists across
+    restarts (mounted on a volume in Docker), so this must not delete it."""
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     SQLModel.metadata.create_all(engine)
 
 

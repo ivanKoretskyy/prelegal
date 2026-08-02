@@ -1,20 +1,30 @@
 import os
-import secrets
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import bcrypt
-from itsdangerous import BadSignature, URLSafeTimedSerializer
+import jwt
 
 SESSION_COOKIE_NAME = "session"
 SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7
 
-# Falls back to a fresh random secret each process start rather than a fixed
-# default, so sessions can't be forged just by reading the source. This is
-# consistent with the DB itself being wiped on every start (see database.py)
-# — no session could outlive a restart anyway. Set SESSION_SECRET_KEY to keep
-# sessions valid across restarts (e.g. multiple replicas behind a proxy).
-_SECRET_KEY = os.environ.get("SESSION_SECRET_KEY") or secrets.token_hex(32)
-_serializer = URLSafeTimedSerializer(_SECRET_KEY, salt="prelegal-session")
+JWT_ALGORITHM = "HS256"
+
+# The SQLite DB and this secret both now persist across container restarts
+# (see database.py and scripts/start-*), so unlike the old itsdangerous
+# setup, there's no free "everything resets on restart" safety net for a
+# forgotten secret. Failing fast here beats silently issuing tokens that
+# become invalid — or worse, forgeable via a predictable default — the next
+# time the process restarts. The start scripts generate and persist this
+# into .env automatically, so this should only ever fail outside that path.
+try:
+    _SECRET_KEY = os.environ["SESSION_SECRET_KEY"]
+except KeyError as exc:
+    raise RuntimeError(
+        "SESSION_SECRET_KEY is not set. Run via scripts/start-* (which "
+        "generates and persists one into .env), or set it yourself for "
+        "local/dev use."
+    ) from exc
 
 
 def hash_password(password: str) -> str:
@@ -26,12 +36,18 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 
 def create_session_token(user_id: int) -> str:
-    return _serializer.dumps({"user_id": user_id})
+    now = datetime.now(timezone.utc)
+    payload = {
+        "sub": str(user_id),
+        "iat": now,
+        "exp": now + timedelta(seconds=SESSION_MAX_AGE_SECONDS),
+    }
+    return jwt.encode(payload, _SECRET_KEY, algorithm=JWT_ALGORITHM)
 
 
 def read_session_token(token: str) -> Optional[int]:
     try:
-        data = _serializer.loads(token, max_age=SESSION_MAX_AGE_SECONDS)
-    except BadSignature:
+        payload = jwt.decode(token, _SECRET_KEY, algorithms=[JWT_ALGORITHM])
+    except jwt.PyJWTError:
         return None
-    return data.get("user_id")
+    return int(payload["sub"])

@@ -33,6 +33,10 @@ def list_catalog() -> list[CatalogEntry]:
     return [CatalogEntry(**entry) for entry in data]
 
 
+def is_known_filename(filename: str) -> bool:
+    return any(entry.filename == filename for entry in list_catalog())
+
+
 def extract_field_labels(content: str) -> list[str]:
     seen: dict[str, None] = {}
     for match in _FIELD_PATTERN.finditer(content):

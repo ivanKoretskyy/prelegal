@@ -1,1 +1,4 @@
 OPENROUTER_API_KEY=sk-or-v1-abcdefg
+# Auto-generated and appended by scripts/start-* on first run. Signs session
+# JWTs; must stay stable across restarts or all sessions are invalidated.
+SESSION_SECRET_KEY=

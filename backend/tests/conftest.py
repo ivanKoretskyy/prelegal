@@ -1,4 +1,9 @@
+import os
 from typing import Iterator
+
+# security.py reads SESSION_SECRET_KEY at import time, so this must be set
+# before `backend.main` (and everything it imports) is ever imported.
+os.environ.setdefault("SESSION_SECRET_KEY", "test-secret-key-at-least-32-bytes-long")
 
 import pytest
 from fastapi.testclient import TestClient

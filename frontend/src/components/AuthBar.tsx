@@ -1,53 +1,24 @@
 "use client";
 
-import { type FormEvent, useEffect, useState } from "react";
-import { apiUrl } from "@/lib/api";
+import { type FormEvent, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 
-type AuthedUser = { id: number; email: string };
 type Mode = "signin" | "signup";
 
 export function AuthBar() {
-  const [user, setUser] = useState<AuthedUser | null>(null);
-  const [checkingSession, setCheckingSession] = useState(true);
+  const { user, isLoading, signIn, signUp, signOut } = useAuth();
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetch(apiUrl("/api/auth/me"), { credentials: "include" })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data) => {
-        if (!cancelled) setUser(data);
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setCheckingSession(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
     setIsSubmitting(true);
     try {
-      const response = await fetch(apiUrl(`/api/auth/${mode}`), {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      if (!response.ok) {
-        const body = await response.json().catch(() => null);
-        throw new Error(body?.detail ?? "Something went wrong. Please try again.");
-      }
-      const data: AuthedUser = await response.json();
-      setUser(data);
+      await (mode === "signup" ? signUp(email, password) : signIn(email, password));
       setPassword("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
@@ -56,12 +27,7 @@ export function AuthBar() {
     }
   };
 
-  const handleSignOut = async () => {
-    await fetch(apiUrl("/api/auth/signout"), { method: "POST", credentials: "include" });
-    setUser(null);
-  };
-
-  if (checkingSession) {
+  if (isLoading) {
     return <div className="h-10 border-b border-desk-border bg-desk sm:h-11" />;
   }
 
@@ -72,7 +38,7 @@ export function AuthBar() {
           <p className="font-mono text-[11px] text-pad-muted-2">Signed in as {user.email}</p>
           <button
             type="button"
-            onClick={handleSignOut}
+            onClick={() => signOut()}
             className="font-mono text-[11px] uppercase tracking-[0.14em] text-stamp-soft transition-colors hover:text-stamp"
           >
             Sign out
